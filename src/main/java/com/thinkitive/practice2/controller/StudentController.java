@@ -3,6 +3,7 @@ package com.thinkitive.practice2.controller;
 import com.thinkitive.practice2.entity.Student;
 import com.thinkitive.practice2.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,8 +16,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/api/student") // every URL in this class starts with /api/students
+@RequestMapping("/api/student") // every URL in this class starts with /api/student
 public class StudentController {
 
     @Autowired
