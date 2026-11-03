@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - develop
+      - code-review
+  workflow_dispatch:
 
 jobs:
   deploy:
