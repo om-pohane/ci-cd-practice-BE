@@ -1,78 +1,121 @@
-# Student CRUD API (Spring Boot practice)
+# ⚔️ BotClash Cyber-Arena — Backend Engine
 
-A simple REST API for students with **soft delete**.
-Soft delete means the student is not removed from the database. We only set `deleted = true`,
-so the student can be restored later.
+High-performance, low-memory Spring Boot combat simulation & mech management backend for the **BotClash Underground Robot Combat League**.
 
-## How to run
+Optimized specifically for AWS `t3` instances (2GB RAM, 8GB disk space).
 
-1. Fill in the MySQL details in `src/main/resources/application.properties`
-   (`spring.datasource.url`, `username`, `password`).
-2. Run `./mvnw spring-boot:run`.
-3. The API runs at `http://localhost:8080`. The `students` table is created automatically.
+---
 
-## Run with Docker
+## 🚀 Key Features
 
-You only need Docker Desktop. Java, Maven and MySQL are not needed on your machine.
+- **Turn-based Battle Simulator**: Simulates high-stakes robot combat turn-by-turn with initiative rolls, speed-based evasion/dodges, 18% critical strike multiplier (1.6x damage), and armor mitigation.
+- **Dynamic Combat Telemetry**: Generates play-by-play battle round logs with weapon-specific combat commentary.
+- **Pre-seeded Arena Legends**: Built-in seeding service (`POST /api/bots/seed`) to spawn 6 championship gladiator mechs across all weight classes.
+- **Scrapyard Soft-Deletion**: Destroyed or decommissioned bots are soft-deleted (`scrapped = true`) and can be nano-repaired individually or in batch.
+- **Hall of Fame Leaderboard**: Live ranking system sorting active bots by total victories, combat rating, and win ratios.
+- **AWS `t3` Memory Tuning**: Capped Hikari connection pool (5 connections) and Tomcat thread pool (40 threads), running with JVM heap limits under ~250MB RSS.
+
+---
+
+## 🛠️ How to Run Locally
+
+### Prerequisites
+- Java 17+ (JDK)
+- MySQL 8.x running on port `3306` (or Docker MySQL)
+- Database: `student_db` (or updated in `application.properties`)
+
+### Step 1: Start Backend
+```bash
+cd Practice-2
+./mvnw clean compile
+./mvnw spring-boot:run
+```
+The API boots at `http://localhost:8080`. Hibernate will automatically generate or update the `combat_bots` table.
+
+---
+
+## 🐳 Run with Docker & Docker Compose
 
 ```bash
-docker compose up --build      # build and start the app + MySQL
-docker compose down            # stop (data is kept)
-docker compose down -v         # stop and delete the database data
+cd Practice-2
+docker compose up --build      # Build and boot Spring Boot + MySQL 8.4
+docker compose down            # Stop containers
+docker compose down -v         # Stop and wipe database volume
 ```
 
-The API runs at `http://localhost:8080`. MySQL is reachable from your Mac at `localhost:3307`
-(user `root`, password `root`).
+- API: `http://localhost:8080`
+- MySQL host port: `localhost:3307` (`root` / `root`)
 
-## Files
+---
 
-| File | What it does |
-|------|--------------|
-| `entity/Student.java` | The Student class, mapped to the `students` table |
-| `repository/StudentRepository.java` | Talks to the database (JPA) |
-| `service/StudentService.java` | The logic: create, update, soft delete, restore |
-| `controller/StudentController.java` | The REST URLs |
+## 📡 REST API Reference
 
-Flow of a request: **Controller -> Service -> Repository -> Database**
+All endpoints are mapped under `@CrossOrigin(origins = "*")` at `/api/bots`:
 
-## APIs
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/bots` | Retrieve all active hangar mechs (optional `?weightClass=` & `?weaponType=`) |
+| `GET` | `/api/bots/{id}` | Get single bot specification by ID |
+| `POST` | `/api/bots` | Forge/create a new custom combat mech |
+| `PUT` | `/api/bots/{id}` | Re-tune / upgrade an existing combat mech |
+| `DELETE` | `/api/bots/{id}` | Decommission / scrap mech (soft-delete to Scrapyard) |
+| `POST` | `/api/bots/duel` | **Commence turn-based arena duel simulation** |
+| `GET` | `/api/bots/leaderboard` | Hall of Fame leaderboard ranked by arena victories |
+| `GET` | `/api/bots/scrapyard` | List all decommissioned / destroyed mechs |
+| `PUT` | `/api/bots/{id}/restore` | Nano-repair single bot back to active service |
+| `POST` | `/api/bots/scrapyard/restore-all` | Batch restore all scrapped bots |
+| `POST` | `/api/bots/seed` | Auto-seed 6 preset gladiator bots into the arena |
 
-| Method | URL | What it does |
-|--------|-----|--------------|
-| POST   | `/api/students` | Create a student |
-| GET    | `/api/students` | Get all active students |
-| GET    | `/api/students/{id}` | Get one student by id |
-| GET    | `/api/students/search?course=BSc` | Get students of a course |
-| PUT    | `/api/students/{id}` | Update a student |
-| DELETE | `/api/students/{id}` | Soft delete a student |
-| GET    | `/api/students/deleted` | Get all deleted students |
-| PUT    | `/api/students/{id}/restore` | Restore a deleted student |
+---
 
-Example JSON body for POST and PUT:
+## ⚔️ Combat Duel Payload Example
 
+### `POST /api/bots/duel`
 ```json
 {
-  "name": "Riya",
-  "email": "riya@mail.com",
-  "age": 20,
-  "course": "BSc"
+  "bot1Id": 1,
+  "bot2Id": 2,
+  "arenaEnvironment": "MOLTEN_FOUNDRY"
 }
 ```
 
-If a student is not found you get **404** with a message like `"Student not found with id 5"`.
+### Duel Response Example
+```json
+{
+  "winner": { "id": 1, "name": "VORTEX RIPPER", ... },
+  "loser": { "id": 2, "name": "TITAN CRUSHER", ... },
+  "isDraw": false,
+  "totalRounds": 6,
+  "victoryQuote": "VORTEX RIPPER obliterated TITAN CRUSHER in round 6!",
+  "combatLog": [
+    {
+      "round": 1,
+      "attackerId": 1,
+      "defenderId": 2,
+      "damageDealt": 34,
+      "defenderHpRemaining": 146,
+      "isCritical": true,
+      "isDodge": false,
+      "commentary": "💥 CRITICAL STRIKE! VORTEX RIPPER detonates plasma burst on TITAN CRUSHER for 34 damage! [146 HP left]"
+    }
+  ]
+}
+```
 
-## Try it with curl (or use Postman)
+---
 
-```bash
-curl -X POST http://localhost:8080/api/students -H "Content-Type: application/json" -d '{"name":"Riya","email":"riya@mail.com","age":20,"course":"BSc"}'
+## 🏗️ Architecture
 
-curl http://localhost:8080/api/students
-curl http://localhost:8080/api/students/1
-curl "http://localhost:8080/api/students/search?course=BSc"
-
-curl -X PUT http://localhost:8080/api/students/1 -H "Content-Type: application/json" -d '{"name":"Riya Shah","email":"riya@mail.com","age":21,"course":"BSc"}'
-
-curl -X DELETE http://localhost:8080/api/students/1
-curl http://localhost:8080/api/students/deleted
-curl -X PUT http://localhost:8080/api/students/1/restore
+```
+Practice-2/
+├── src/main/java/com/thinkitive/practice2/
+│   ├── controller/CombatBotController.java  # REST API Endpoints
+│   ├── entity/CombatBot.java                # JPA Entity for Combat Mech
+│   ├── repository/CombatBotRepository.java  # Spring Data JPA Repository
+│   ├── service/CombatBotService.java        # Combat Simulation & Business Logic
+│   └── dto/
+│       ├── DuelRequest.java                 # Bot 1 vs Bot 2 Duel Request DTO
+│       ├── DuelResult.java                  # Battle Results & Victory Stats
+│       └── BattleRoundLog.java              # Turn-by-turn Combat Telemetry
+└── src/main/resources/application.properties # t3 Micro Pool & JPA Configuration
 ```
